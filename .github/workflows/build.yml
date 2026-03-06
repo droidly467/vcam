@@ -1,17 +1,16 @@
-name: Build VCam .deb
+name: Build VCam deb
 
 on:
   push:
-    branches: [main, master]
-    tags: ['v*']
-  pull_request:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
-    timeout-minutes: 15
+    runs-on: macos-13
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -20,35 +19,32 @@ jobs:
       - name: Install Theos
         run: |
           bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
-          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-          echo "$HOME/theos/bin" >> $GITHUB_PATH
+          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+          echo "$HOME/theos/bin" >> "$GITHUB_PATH"
 
       - name: Install iOS SDK
         run: |
           cd "$HOME/theos/sdks"
-          curl -LO https://github.com/theos/sdks/archive/master.zip
+          curl -sLO https://github.com/theos/sdks/archive/master.zip
           unzip -q master.zip
           mv sdks-master/*.sdk . 2>/dev/null || true
           rm -rf sdks-master master.zip
-          ls -la *.sdk | head -5
+          echo "SDKs installed:"
+          ls *.sdk || echo "No SDK found"
 
       - name: Build tweak
+        env:
+          THEOS: /Users/runner/theos
         run: |
+          export PATH="$THEOS/bin:$PATH"
           make clean || true
-          make package FINALPACKAGE=1
-          echo "=== Build output ==="
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          echo "Build output:"
           ls -la packages/
 
-      - name: Upload .deb artifact
+      - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vcam-${{ github.sha }}
+          name: vcam-deb
           path: packages/*.deb
-          retention-days: 30
-
-      - name: Create Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: packages/*.deb
-          generate_release_notes: true
+          retention-days: 90
