@@ -1,0 +1,12 @@
+Package: com.vcam.qatool
+Name: VCam - Virtual Camera QA Tool
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: Internal QA/testing virtual camera tweak for iOS. Provides simulated camera feed from local media files for testing app camera pipelines. NOT for production use.
+Maintainer: QA Team <qa@internal.test>
+Author: QA Team <qa@internal.test>
+Section: Tweaks
+Depends: mobilesubstrate (>= 0.9.5000), firmware (>= 15.0), preferenceloader
+Conflicts: 
+Replaces: 
+Tag: role::hacker
