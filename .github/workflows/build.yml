@@ -1,40 +1,34 @@
-name: Build VCam deb
+name: Build VCam .deb
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main]
   workflow_dispatch:
+
 jobs:
   build:
-    runs-on: macos-14
-    timeout-minutes: 10
+    runs-on: macos-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Install Theos and SDK
-      run: |
-        set -e
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
-        export THEOS="$HOME/theos"
-        echo "THEOS=$THEOS" >> "$GITHUB_ENV"
-        echo "$THEOS/bin" >> "$GITHUB_PATH"
-        cd "$THEOS/sdks"
-        curl -sLO https://github.com/theos/sdks/archive/master.zip
-        unzip -q master.zip
-        mv sdks-master/*.sdk . 2>/dev/null || true
-        rm -rf sdks-master master.zip
-        ls *.sdk
-    - name: Build
-      run: |
-        set -e
-        export THEOS="$HOME/theos"
-        export PATH="$THEOS/bin:$PATH"
-        make clean || true
-        make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
-        ls -la packages/
-    - name: Upload deb
-      uses: actions/upload-artifact@v4
-      with:
-        name: vcam-deb
-        path: packages/*.deb
+      - uses: actions/checkout@v4
+
+      - name: Install Theos
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
+      - name: Install SDK
+        run: |
+          cd $THEOS/sdks
+          curl -LO https://github.com/theos/sdks/archive/master.zip
+          unzip -q master.zip
+          mv sdks-master/*.sdk .
+          rm -rf sdks-master master.zip
+
+      - name: Build
+        run: |
+          make package FINALPACKAGE=1
+
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcam-deb
+          path: packages/*.deb
